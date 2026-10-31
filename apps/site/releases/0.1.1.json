@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "product": "Reqglide",
+  "version": "0.1.1",
+  "platform": "windows-x64",
+  "channel": "preview",
+  "assets": [
+    {
+      "file": "reqglide_0.1.1_windows-x64-setup.exe",
+      "kind": "nsis",
+      "bytes": 7027915,
+      "sha256": "9fbb46f00f8d649fa3fcf4696288163aa439510921ae842f759165dbadd6c7e7",
+      "signatureStatus": "NotSigned"
+    },
+    {
+      "file": "reqglide_0.1.1_windows-x64.msi",
+      "kind": "msi",
+      "bytes": 12115968,
+      "sha256": "a1a5edba8db0821510ad2c95fa6f9e96f2309fa9e4f9c47e174aded867e6c67a",
+      "signatureStatus": "NotSigned"
+    }
+  ]
+}
