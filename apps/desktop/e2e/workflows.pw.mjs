@@ -7,6 +7,7 @@ const pageErrors = new WeakMap();
 // are substituted; native transport and scripting have separate local-server tests.
 async function installDesktopFixture(page) {
   await page.addInitScript(() => {
+    window.isTauri = true;
     const workspace = {
       schemaVersion: 7,
       id: "1e9a4d81-a41e-4fb4-9347-414674d25f82",
@@ -22,7 +23,7 @@ async function installDesktopFixture(page) {
       protocolProfiles: [],
     };
     const fixture = window.desktopFixture = {
-      workspace,
+      workspace: JSON.parse(localStorage.getItem("desktopFixture.workspace") || "null") || workspace,
       secrets: { "992ee4f3-9587-4d35-a3a7-ded9e6d4ef1e": "original-test-token" },
       calls: [],
       saveDelay: 0,
@@ -35,7 +36,20 @@ async function installDesktopFixture(page) {
       invoke: async (command, args = {}) => {
         fixture.calls.push({ command, args: structuredClone(args) });
         switch (command) {
-          case "open_workspace": return session();
+          case "reopen_last_workspace": {
+            const error = localStorage.getItem("desktopFixture.startupError");
+            if (error) throw new Error(error);
+            return localStorage.getItem("desktopFixture.lastWorkspace") ? session() : null;
+          }
+          case "remember_open_workspace":
+            if (args.workspaceId !== fixture.workspace.id) return false;
+            localStorage.setItem("desktopFixture.workspace", JSON.stringify(fixture.workspace));
+            localStorage.setItem("desktopFixture.lastWorkspace", fixture.workspace.id);
+            return true;
+          case "open_workspace":
+            localStorage.removeItem("desktopFixture.startupError");
+            localStorage.setItem("desktopFixture.workspace", JSON.stringify(fixture.workspace));
+            return session();
           case "export_workspace_backup":
           case "export_support_diagnostics":
             if (fixture.cancelMaintenance) return null;
@@ -48,10 +62,17 @@ async function installDesktopFixture(page) {
             fixture.workspace.name = "Restored workspace";
             fixture.secrets = {};
             return session();
-          case "load_recovery_snapshot": return null;
+          case "load_recovery_snapshot":
+            return JSON.parse(localStorage.getItem(`desktopFixture.recovery.${args.workspaceId}`) || "null");
           case "save_recovery_snapshot":
+            localStorage.setItem(`desktopFixture.recovery.${args.workspaceId}`, JSON.stringify(args.snapshot));
+            return;
           case "clear_recovery_snapshot":
-          case "close_workspace": return;
+            localStorage.removeItem(`desktopFixture.recovery.${args.workspaceId}`);
+            return;
+          case "close_workspace":
+            localStorage.removeItem("desktopFixture.lastWorkspace");
+            return;
           case "environment_secret_statuses":
             return Object.fromEntries(Object.keys(fixture.secrets).map(id => [id, true]));
           case "environment_local_values":
@@ -70,6 +91,7 @@ async function installDesktopFixture(page) {
               else fixture.secrets[mutation.variableId] = mutation.value;
             }
             fixture.workspace = structuredClone(args.workspace);
+            localStorage.setItem("desktopFixture.workspace", JSON.stringify(fixture.workspace));
             return session();
           }
           case "execute_request_lifecycle": {
@@ -154,6 +176,56 @@ test("private backups explain their contents and preserve unsaved request tabs",
   expect(calls).toEqual([{ command: "export_workspace_backup", args: {} }]);
 });
 
+test("relaunch reopens the last workspace, tabs, and environment without a picker or request execution", async ({ page }) => {
+  const productionId = "9d699421-c02f-40e9-8dfb-9f82d18a6a53";
+  await page.evaluate((id) => {
+    window.desktopFixture.workspace.environments.push({ id, name: "Production", variables: [] });
+  }, productionId);
+  await page.getByRole("button", { name: "Open", exact: true }).click();
+  await page.getByLabel("Active environment").selectOption(productionId);
+  await page.getByLabel("Request URL", { exact: true }).fill("https://api.example.test/first-draft");
+  await page.getByRole("button", { name: "+New", exact: true }).click();
+  await page.getByLabel("Request URL", { exact: true }).fill("https://api.example.test/second-draft");
+  await expect.poll(() => page.evaluate(() => {
+    const snapshot = JSON.parse(localStorage.getItem(`desktopFixture.recovery.${window.desktopFixture.workspace.id}`) || "null");
+    return snapshot?.tabs.find(tab => tab.id === snapshot.activeTabId)?.request.url;
+  })).toBe("https://api.example.test/second-draft");
+  const prompts = [];
+  page.on("dialog", async dialog => {
+    if (dialog.type() !== "beforeunload") prompts.push(dialog.message());
+    await dialog.accept();
+  });
+  await page.reload();
+  await expect(page.getByLabel("Request URL", { exact: true })).toHaveValue("https://api.example.test/second-draft");
+  await expect(page.locator(".open-request-tab")).toHaveCount(2);
+  await expect(page.getByLabel("Active environment")).toHaveValue(productionId);
+  const calls = await page.evaluate(() => window.desktopFixture.calls);
+  expect(calls.filter(call => call.command === "reopen_last_workspace")).toHaveLength(1);
+  expect(calls.some(call => ["open_workspace", "execute_request_lifecycle"].includes(call.command))).toBe(false);
+  expect(prompts).toEqual([]);
+});
+
+test("an unavailable previous workspace leaves Open usable for recovery", async ({ page }) => {
+  await page.evaluate(() => localStorage.setItem("desktopFixture.startupError", "Could not reopen the last workspace. Its folder may have moved or be unavailable. Use Open to choose a workspace."));
+  await page.reload();
+  await expect(page.getByText("Its folder may have moved", { exact: false })).toBeVisible();
+  const open = page.getByRole("button", { name: "Open", exact: true });
+  await expect(open).toBeEnabled();
+  await open.click();
+  await expect(page.getByLabel("Active environment")).toHaveValue("843e482b-09b7-44ce-9b80-a269ef2e90dc");
+});
+
+test("explicit Close workspace clears automatic reopening without deleting saved data", async ({ page }) => {
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("desktopFixture.lastWorkspace"))).not.toBeNull();
+  await page.getByRole("button", { name: "Close workspace", exact: true }).click();
+  await expect(page.getByText("Workspace closed. Files remain on disk.")).toBeVisible();
+  expect(await page.evaluate(() => localStorage.getItem("desktopFixture.lastWorkspace"))).toBeNull();
+  await page.reload();
+  await page.getByText("Tools", { exact: true }).click();
+  await expect(page.getByRole("button", { name: /Back up workspace/ })).toBeDisabled();
+  expect(await page.evaluate(() => window.desktopFixture.calls.some(call => call.command === "open_workspace"))).toBe(false);
+});
+
 test("invalid restore preserves the current workspace and valid restore opens a separate one", async ({ page }) => {
   const before = await page.evaluate(() => window.desktopFixture.workspace.id);
   await page.evaluate(() => { window.desktopFixture.restoreError = "This file is not a valid workspace backup."; });
@@ -173,6 +245,7 @@ test("invalid restore preserves the current workspace and valid restore opens a 
 });
 
 test("diagnostics work without a workspace and cancelled file dialogs report no export", async ({ page }) => {
+  await page.evaluate(() => localStorage.removeItem("desktopFixture.lastWorkspace"));
   await page.reload();
   await page.getByText("Tools", { exact: true }).click();
   await expect(page.getByRole("button", { name: /Back up workspace/ })).toBeDisabled();

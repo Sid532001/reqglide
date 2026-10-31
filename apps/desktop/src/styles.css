@@ -4438,3 +4438,20 @@ textarea:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }
+
+.startup-state {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.startup-state .app-icon {
+  width: 30px;
+  height: 30px;
+  color: var(--accent);
+}

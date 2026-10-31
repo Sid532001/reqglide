@@ -102,6 +102,30 @@ Authorization headers, and redirects using synthetic credentials and local
 servers. Restoring an unavailable destination's network route is separate from
 changing request credentials.
 
+## Workspace startup recovery (2026-10-31)
+
+Reqglide stores only the active workspace's native path and UUID in
+`last-workspace.json` under its device-local application-data directory. Opening,
+creating, or restoring a workspace remembers that location. Startup validates
+the workspace document and remembered identity before activating it; it never
+sends a request, runs a script, or starts a protocol session. Existing recovery
+snapshots restore available tabs and the active environment automatically.
+Recovery snapshots use the existing debounced persistence and redaction rules.
+
+Explicit **Close workspace** atomically clears the startup preference while
+leaving workspace files intact. An unavailable, invalid, or replaced workspace
+shows a non-blocking notice and leaves manual Open available. Startup waits at
+most five seconds for its operation lock and workspace read; a late read worker
+cannot change the active workspace. A location-save failure does not prevent use
+of an already-open workspace. The startup screen prevents editing while the
+previous workspace is being loaded.
+
+Native temporary-directory checks cover metadata-only persistence, restart
+loading, latest-workspace replacement, explicit close, missing/replaced folders,
+corrupt/oversized settings, and relative-path rejection. Browser checks cover
+tab/environment restoration without a picker or execution, missing-folder
+fallback, explicit close, and a single startup command under React StrictMode.
+
 ## Release acceptance still required
 
 Actual OS credential-manager prompts and access failures, native file dialogs,

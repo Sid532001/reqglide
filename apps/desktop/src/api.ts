@@ -577,6 +577,14 @@ export async function openWorkspace(): Promise<WorkspaceSession | null> {
   return invoke<WorkspaceSession | null>("open_workspace");
 }
 
+export async function reopenLastWorkspace(): Promise<WorkspaceSession | null> {
+  return invoke<WorkspaceSession | null>("reopen_last_workspace");
+}
+
+export async function rememberOpenWorkspace(workspaceId: string): Promise<boolean> {
+  return invoke<boolean>("remember_open_workspace", { workspaceId });
+}
+
 export async function exportWorkspaceBackup(): Promise<string | null> {
   return invoke<string | null>("export_workspace_backup");
 }

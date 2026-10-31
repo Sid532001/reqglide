@@ -131,6 +131,13 @@ transport and script integration tests use local servers. See
    nested folder.
 4. Use **Open** later and select the workspace directory itself.
 
+Reqglide remembers the last successfully opened workspace on this device and
+reopens it on launch, restoring the available request-tab snapshot and active
+environment. After upgrading from a version before 0.1.2, open your workspace
+once to establish this preference. Closing the app keeps it remembered;
+explicitly choosing **Close workspace** clears automatic reopening. If its
+folder has moved or cannot be loaded, the app leaves **Open** available.
+
 The **Tools** menu opens environments, history, the collection runner, protocol
 workbench, cookies, network/TLS settings, and workspace authentication. Tabs and
 unsaved editor state are recovered from a machine-local snapshot after an
@@ -198,9 +205,9 @@ Build internal preview installers with:
 ./scripts/build-windows.ps1 -Preview
 ```
 
-NSIS and MSI packages named `reqglide_0.1.1_windows-x64-setup.exe` and
-`reqglide_0.1.1_windows-x64.msi`, a build manifest, and SHA-256 checksums are written
-to `.release-artifacts/windows/0.1.1/`. A signing certificate has not been obtained;
+NSIS and MSI packages named `reqglide_0.1.2_windows-x64-setup.exe` and
+`reqglide_0.1.2_windows-x64.msi`, a build manifest, and SHA-256 checksums are written
+to `.release-artifacts/windows/0.1.2/`. A signing certificate has not been obtained;
 these installers are internal previews. The script also supports a verified
 signed-candidate path once a publisher identity is available. See
 [Windows release readiness](docs/production-readiness.md) for signing setup and

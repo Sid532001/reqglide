@@ -116,7 +116,7 @@ checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
 
 [[package]]
 name = "api-client-cli"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "api-client-core",
  "api-client-http",
@@ -127,7 +127,7 @@ dependencies = [
 
 [[package]]
 name = "api-client-core"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "serde",
  "serde_json",
@@ -137,7 +137,7 @@ dependencies = [
 
 [[package]]
 name = "api-client-desktop"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "api-client-core",
  "api-client-history",
@@ -162,7 +162,7 @@ dependencies = [
 
 [[package]]
 name = "api-client-history"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "api-client-core",
  "rusqlite",
@@ -176,7 +176,7 @@ dependencies = [
 
 [[package]]
 name = "api-client-http"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "api-client-core",
  "api-client-import",
@@ -194,7 +194,7 @@ dependencies = [
 
 [[package]]
 name = "api-client-import"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "api-client-core",
  "api-client-workspace",
@@ -208,7 +208,7 @@ dependencies = [
 
 [[package]]
 name = "api-client-protocol"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "api-client-core",
  "api-client-http",
@@ -235,7 +235,7 @@ dependencies = [
 
 [[package]]
 name = "api-client-script"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "api-client-core",
  "rquickjs",
@@ -246,7 +246,7 @@ dependencies = [
 
 [[package]]
 name = "api-client-vault"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "keyring",
  "thiserror 2.0.20",
@@ -254,7 +254,7 @@ dependencies = [
 
 [[package]]
 name = "api-client-workspace"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "api-client-core",
  "atomic-write-file",

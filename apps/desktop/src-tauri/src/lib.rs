@@ -54,6 +54,7 @@ const MAX_RUN_DATA_BYTES: usize = 2 * 1024 * 1024;
 const MAX_RUN_REPORT_BYTES: usize = 16 * 1024 * 1024;
 const MAX_RUN_EXECUTIONS: usize = 10_000;
 const MAX_API_IMPORT_BYTES: u64 = 16 * 1024 * 1024;
+mod last_workspace;
 mod maintenance;
 const MAX_PROTOCOL_SESSIONS: usize = 8;
 const MAX_PROTOCOL_MESSAGE_BYTES: usize = 4 * 1024 * 1024;
@@ -2640,6 +2641,86 @@ async fn create_workspace(
 }
 
 #[tauri::command]
+async fn reopen_last_workspace(
+    app: AppHandle,
+    state: State<'_, WorkspaceState>,
+) -> Result<Option<WorkspaceSession>, String> {
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(5);
+    let _operation = tokio::time::timeout_at(deadline, state.operation_lock.lock())
+        .await
+        .map_err(|_| {
+            "Reopening the last workspace took too long. Use Open to choose a workspace.".to_owned()
+        })?;
+    let current = {
+        state
+            .active
+            .lock()
+            .map_err(|_| "workspace state is unavailable".to_owned())?
+            .as_ref()
+            .map(|active| WorkspaceSession {
+                root_path: active.root_path.to_string_lossy().into_owned(),
+                workspace: active.workspace.clone(),
+            })
+    };
+    if current.is_some() {
+        return Ok(current);
+    }
+    let settings = last_workspace_path(&app)?;
+    // This worker only reads files. If it outlives the startup deadline, it cannot
+    // switch the workspace after the user has chosen another folder.
+    let session = tokio::time::timeout_at(
+        deadline,
+        tokio::task::spawn_blocking(move || last_workspace::reopen(&settings)),
+    )
+    .await
+    .map_err(|_| {
+        "Reopening the last workspace took too long. Use Open to choose a workspace.".to_owned()
+    })?
+    .map_err(|_| {
+        "Could not reopen the last workspace. Use Open to choose a workspace.".to_owned()
+    })??;
+    if let Some(session) = &session {
+        set_active_workspace(&state, session)?;
+    }
+    Ok(session)
+}
+
+#[tauri::command]
+async fn remember_open_workspace(
+    app: AppHandle,
+    state: State<'_, WorkspaceState>,
+    workspace_id: String,
+) -> Result<bool, String> {
+    let settings = last_workspace_path(&app)?;
+    let operation = Arc::clone(&state.operation_lock).lock_owned().await;
+    let active = Arc::clone(&state.active);
+    tokio::task::spawn_blocking(move || {
+        let _operation = operation;
+        let current = active
+            .lock()
+            .map_err(|_| "workspace state is unavailable".to_owned())?;
+        let Some(current) = current
+            .as_ref()
+            .filter(|current| current.workspace.id == workspace_id)
+        else {
+            return Ok(false);
+        };
+        last_workspace::remember(&settings, &current.root_path, &current.workspace.id)?;
+        Ok(true)
+    })
+    .await
+    .map_err(|_| "Could not remember the open workspace.".to_owned())?
+}
+
+fn last_workspace_path(app: &AppHandle) -> Result<PathBuf, String> {
+    Ok(app
+        .path()
+        .app_local_data_dir()
+        .map_err(|_| "Local application storage is unavailable.".to_owned())?
+        .join("last-workspace.json"))
+}
+
+#[tauri::command]
 async fn open_workspace(
     app: AppHandle,
     state: State<'_, WorkspaceState>,
@@ -2840,16 +2921,25 @@ fn save_workspace_secret_transaction(
 
 #[tauri::command]
 async fn close_workspace(
+    app: AppHandle,
     state: State<'_, WorkspaceState>,
     protocol_state: State<'_, ProtocolSessionState>,
 ) -> Result<(), String> {
-    let _operation = state.operation_lock.lock().await;
+    let settings = last_workspace_path(&app)?;
+    let operation = Arc::clone(&state.operation_lock).lock_owned().await;
     protocol_state.stop_all()?;
-    *state
-        .active
-        .lock()
-        .map_err(|_| "workspace state is unavailable".to_owned())? = None;
-    Ok(())
+    let active = Arc::clone(&state.active);
+    tokio::task::spawn_blocking(move || {
+        let _operation = operation;
+        let mut current = active
+            .lock()
+            .map_err(|_| "workspace state is unavailable".to_owned())?;
+        last_workspace::forget(&settings)?;
+        *current = None;
+        Ok(())
+    })
+    .await
+    .map_err(|_| "Could not close the workspace.".to_owned())?
 }
 
 #[tauri::command]
@@ -3697,6 +3787,8 @@ pub fn run() {
             export_support_diagnostics,
             create_workspace,
             open_workspace,
+            reopen_last_workspace,
+            remember_open_workspace,
             save_workspace,
             environment_secret_statuses,
             environment_local_values,

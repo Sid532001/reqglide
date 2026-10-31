@@ -10,6 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { isTauri } from "@tauri-apps/api/core";
 import {
   cancelHttpRequest,
   clearRecoverySnapshot,
@@ -26,6 +27,8 @@ import {
   loadRecoverySnapshot,
   recordHistory,
   openWorkspace,
+  reopenLastWorkspace,
+  rememberOpenWorkspace,
   restoreWorkspaceBackup,
   pickRequestFile,
   saveResponseBody,
@@ -244,10 +247,12 @@ export function App() {
   const sessionRef = useRef(session);
   const sendingRef = useRef(false);
   const cancelledSendRef = useRef(false);
-  const workspaceTransitionRef = useRef(false);
+  const workspaceTransitionRef = useRef(isTauri());
+  const startupWorkspaceRef = useRef<Promise<WorkspaceSession | null> | null>(null);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState(false);
-  const [isWorkspaceBusy, setIsWorkspaceBusy] = useState(false);
+  const [isWorkspaceBusy, setIsWorkspaceBusy] = useState(isTauri);
+  const [isReopeningWorkspace, setIsReopeningWorkspace] = useState(isTauri);
   const [maintenanceAction, setMaintenanceAction] = useState<WorkspaceMaintenanceAction | null>(null);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
@@ -463,6 +468,37 @@ export function App() {
     window.addEventListener("keydown", handleGlobalKeyDown);
     return () => window.removeEventListener("keydown", handleGlobalKeyDown);
   }, [activeRequestTabId, closeOpenRequestTab, handleSaveRequest, sendRequest, startScratchRequest]);
+
+  useEffect(() => {
+    if (!isTauri()) return;
+    let disposed = false;
+    // StrictMode replays effects in development. Reuse the startup operation so
+    // there is one native reopen and only the active effect applies its result.
+    startupWorkspaceRef.current ??= reopenLastWorkspace();
+    void startupWorkspaceRef.current.then(async (previous) => {
+      if (disposed || !previous) return;
+      await applySession(previous, "automatic");
+      if (!disposed) setNotice({ kind: "success", text: `Reopened ${previous.workspace.name}.` });
+    }).catch((cause: unknown) => {
+      if (!disposed) setNotice({ kind: "info", text: errorMessage(cause) });
+    }).finally(() => {
+      if (!disposed) {
+        workspaceTransitionRef.current = false;
+        setIsWorkspaceBusy(false);
+        setIsReopeningWorkspace(false);
+      }
+    });
+    return () => { disposed = true; };
+  }, []);
+
+  useEffect(() => {
+    if (!isTauri() || !session) return;
+    let disposed = false;
+    void rememberOpenWorkspace(session.workspace.id).catch(() => {
+      if (!disposed) setNotice({ kind: "info", text: "Workspace opened, but its location could not be remembered for next time." });
+    });
+    return () => { disposed = true; };
+  }, [session?.workspace.id, session?.rootPath]);
 
   useEffect(() => {
     const snapshot: Omit<OpenRequestTab, "id" | "title"> = {
@@ -1087,7 +1123,7 @@ export function App() {
 
   async function applySession(
     next: WorkspaceSession,
-    offerRecovery = true,
+    offerRecovery: boolean | "automatic" = true,
   ): Promise<boolean> {
     let recoveredTabs: OpenRequestTab[] | null = null;
     let recoveredActiveTabId: string | null = null;
@@ -1097,9 +1133,9 @@ export function App() {
         const recovery = await loadRecoverySnapshot(next.workspace.id);
         if (
           recovery &&
-          window.confirm(
+          (offerRecovery === "automatic" || window.confirm(
             `Recovered ${recovery.tabs.length} request tab${recovery.tabs.length === 1 ? "" : "s"} from the previous session. Restore them?`,
-          )
+          ))
         ) {
           recoveredTabs = restoreRecoveryTabs(recovery).map((tab) => {
             if (!tab.requestId || findSavedRequest(next.workspace, tab.requestId)) {
@@ -1865,6 +1901,10 @@ export function App() {
       }
       return next;
     });
+  }
+
+  if (isReopeningWorkspace) {
+    return <main className="startup-state" role="status"><AppIcon name="terminal" /><span>Opening Reqglide…</span></main>;
   }
 
   return (
