@@ -8,15 +8,15 @@
     {
       "file": "reqglide_0.1.0_windows-x64-setup.exe",
       "kind": "nsis",
-      "bytes": 7019659,
-      "sha256": "28a3e05937657ff17a293a151f66bf27c9952841bfbecf4f48d0065e98183508",
+      "bytes": 7028094,
+      "sha256": "7b38475cce2d5bee7293f7ddcb1e0956227199ebcad23dbd6d049c916b09ec38",
       "signatureStatus": "NotSigned"
     },
     {
       "file": "reqglide_0.1.0_windows-x64.msi",
       "kind": "msi",
       "bytes": 12111872,
-      "sha256": "28c1971b04b399ca7566625247d9d833cd2eabf5addaade90196f71baf71dd44",
+      "sha256": "441b43cb34fc47ec6a0547a1012ce5896ca9e170a72cf2b53d9c713081aa38d7",
       "signatureStatus": "NotSigned"
     }
   ]
