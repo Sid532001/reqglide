@@ -2541,8 +2541,8 @@ export function App() {
           <div className="response-content">
             {requestError && (
               <div className="error-state" role="alert">
-                <strong>Request failed</strong>
-                <span>{requestError}</span>
+                <strong>{networkFailure?.title ?? "Request failed"}</strong>
+                <span>{networkFailure?.message ?? requestError}</span>
                 {networkFailure && (
                   <>
                     <span>{networkFailure.help}</span>

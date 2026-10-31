@@ -115,7 +115,7 @@ export function NetworkSettingsEditor({
             </label>
 
             {draft.proxyMode === "system" && (
-              <p className="network-hint">Uses operating-system and environment proxy settings. HTTP requests on Windows also resolve automatic PAC/WPAD configuration. Postman-specific custom proxy settings are separate; choose Custom proxy to match them.</p>
+              <p className="network-hint">Uses operating-system and environment proxy settings. HTTP requests on Windows also resolve automatic PAC/WPAD configuration. If your network requires a separate proxy, choose Custom proxy and enter its connection details.</p>
             )}
 
             {draft.proxyMode === "custom" && (

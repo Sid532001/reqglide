@@ -90,6 +90,18 @@ checks. A live unauthenticated HEAD check through Windows' selected PAC route
 reached the previously timing-out destination in approximately 1.8 seconds.
 No real token or saved API request body was sent during that connectivity check.
 
+## Network-error clarification (2026-10-31)
+
+Connection-setup failures, response-header deadlines, response-body failures,
+and proxy-discovery failures have distinct user-facing guidance. They do not
+claim that a bearer token was rejected without an HTTP response. Native timeout
+text and network settings no longer reference a competing client; known legacy
+messages in recovered tabs/history are normalized for display. Authentication
+wire tests continue to cover raw tokens, environment references, duplicate
+Authorization headers, and redirects using synthetic credentials and local
+servers. Restoring an unavailable destination's network route is separate from
+changing request credentials.
+
 ## Release acceptance still required
 
 Actual OS credential-manager prompts and access failures, native file dialogs,

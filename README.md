@@ -198,9 +198,9 @@ Build internal preview installers with:
 ./scripts/build-windows.ps1 -Preview
 ```
 
-NSIS and MSI packages named `reqglide_0.1.0_windows-x64-setup.exe` and
-`reqglide_0.1.0_windows-x64.msi`, a build manifest, and SHA-256 checksums are written
-to `.release-artifacts/windows/0.1.0/`. A signing certificate has not been obtained;
+NSIS and MSI packages named `reqglide_0.1.1_windows-x64-setup.exe` and
+`reqglide_0.1.1_windows-x64.msi`, a build manifest, and SHA-256 checksums are written
+to `.release-artifacts/windows/0.1.1/`. A signing certificate has not been obtained;
 these installers are internal previews. The script also supports a verified
 signed-candidate path once a publisher identity is available. See
 [Windows release readiness](docs/production-readiness.md) for signing setup and

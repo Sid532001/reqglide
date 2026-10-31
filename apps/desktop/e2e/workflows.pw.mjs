@@ -464,10 +464,13 @@ test("simultaneous extraction saves preserve both values", async ({ page }) => {
 });
 
 test("network timeouts expose proxy and timeout settings instead of implying bad auth", async ({ page }) => {
-  await page.evaluate(() => { window.desktopFixture.nextError = "connection timed out during DNS, proxy, TCP, or TLS setup"; });
+  await page.evaluate(() => { window.desktopFixture.nextError = "connection timed out during DNS, proxy, TCP, or TLS setup; check the VPN and proxy settings used by Postman\nTransport route: system settings (no PAC override selected)"; });
   await page.getByRole("button", { name: /Send/ }).click();
   const failure = page.getByRole("alert");
-  await expect(failure).toContainText("A timeout is different from an HTTP 401/403");
+  await expect(failure).toContainText("Connection timed out");
+  await expect(failure).toContainText("No HTTP response was received");
+  await expect(failure).not.toContainText("Postman");
+  await expect(failure).not.toContainText("no PAC override selected");
   await expect(failure).toContainText("System proxy");
   await failure.getByRole("button", { name: "Network & TLS settings", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Network & TLS", exact: true });

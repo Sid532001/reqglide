@@ -184,7 +184,7 @@ pub fn build_streaming_reqwest_client(
 /// overall request timeout. Without this, one unreachable resolved address (e.g. a dead-end IPv6
 /// route behind a VPN, common on corporate networks) can silently consume the whole request
 /// timeout budget before the connector even tries the next candidate address — unlike browsers
-/// and Node (and therefore Postman), which race/fail over between resolved addresses quickly.
+/// and Node, which race/fail over between resolved addresses quickly.
 /// This is why the same request can hang and time out here while succeeding elsewhere.
 const MAX_CONNECT_TIMEOUT_MS: u64 = 10_000;
 
@@ -810,7 +810,7 @@ fn transport_route(proxy: &ProxyConfiguration, url: &Url) -> String {
                     return format!("system environment {key}: {}", safe_proxy_endpoint(&value));
                 }
             }
-            "system settings (no PAC override selected)".to_owned()
+            "operating-system proxy settings".to_owned()
         }
     }
 }
@@ -900,7 +900,7 @@ pub enum HttpExecutionError {
     )]
     SystemProxyTimeout,
     #[error(
-        "connection timed out during DNS, proxy, TCP, or TLS setup; check the VPN and proxy settings used by Postman{route}"
+        "connection timed out during DNS, proxy, TCP, or TLS setup; check destination reachability, VPN, and proxy settings{route}"
     )]
     ConnectionTimeout {
         route: String,

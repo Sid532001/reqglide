@@ -61,7 +61,7 @@ pnpm test:e2e
 ```
 
 The script builds NSIS and MSI installers, checks version consistency, records
-Authenticode status, and creates `.release-artifacts/windows/0.1.0/` containing
+Authenticode status, and creates `.release-artifacts/windows/0.1.1/` containing
 the installers, `manifest.json`, and `SHA256SUMS.txt`. Artifacts are explicitly
 classified as `internal-preview`. They are not automatically uploaded or
 published. The manifest records source commit/cleanliness and whether a build
