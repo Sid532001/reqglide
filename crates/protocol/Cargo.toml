@@ -1,0 +1,32 @@
+[package]
+name = "api-client-protocol"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+api-client-core.workspace = true
+api-client-http.workspace = true
+base64.workspace = true
+bytes.workspace = true
+eventsource-stream.workspace = true
+futures-util.workspace = true
+http.workspace = true
+prost.workspace = true
+prost-reflect.workspace = true
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tokio-stream.workspace = true
+tokio-tungstenite.workspace = true
+tonic.workspace = true
+tonic-reflection.workspace = true
+url.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

@@ -1,0 +1,36 @@
+[package]
+name = "api-client-desktop"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+rust-version.workspace = true
+
+[lib]
+name = "api_client_desktop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build.workspace = true
+
+[dependencies]
+api-client-core.workspace = true
+api-client-http.workspace = true
+api-client-history.workspace = true
+api-client-import.workspace = true
+api-client-protocol.workspace = true
+api-client-script.workspace = true
+api-client-vault.workspace = true
+api-client-workspace.workspace = true
+atomic-write-file.workspace = true
+base64.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tauri.workspace = true
+tauri-plugin-dialog.workspace = true
+tokio.workspace = true
+url.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

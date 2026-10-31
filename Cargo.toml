@@ -1,0 +1,85 @@
+[workspace]
+members = [
+    "apps/cli",
+    "apps/desktop/src-tauri",
+    "crates/core",
+    "crates/http",
+    "crates/history",
+    "crates/import",
+    "crates/protocol",
+    "crates/script",
+    "crates/vault",
+    "crates/workspace",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+rust-version = "1.85"
+
+[workspace.dependencies]
+api-client-core = { path = "crates/core" }
+api-client-http = { path = "crates/http" }
+api-client-history = { path = "crates/history" }
+api-client-import = { path = "crates/import" }
+api-client-protocol = { path = "crates/protocol" }
+api-client-script = { path = "crates/script" }
+api-client-vault = { path = "crates/vault" }
+api-client-workspace = { path = "crates/workspace" }
+atomic-write-file = "0.3"
+base64 = "0.22"
+bytes = "1"
+clap = { version = "4.5", features = ["derive"] }
+cookie_store = "0.22.1"
+futures-util = "0.3"
+eventsource-stream = "0.2.3"
+http = "1"
+reqwest = { version = "0.13.5", default-features = false, features = [
+    "brotli",
+    "cookies",
+    "deflate",
+    "gzip",
+    "json",
+    "multipart",
+    "rustls",
+    "socks",
+    "stream",
+    "system-proxy",
+    "zstd",
+] }
+prost = "0.14"
+prost-reflect = { version = "0.16.5", features = ["serde"] }
+rquickjs = "0.13"
+keyring = "4.2"
+rusqlite = { version = "0.40.2", features = ["bundled"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml_ng = "0.10"
+shell-words = "1.1"
+tauri = "2"
+tauri-build = "2"
+tauri-plugin-dialog = "2"
+tempfile = "3"
+thiserror = "2"
+tokio = { version = "1", features = [
+    "fs",
+    "io-util",
+    "macros",
+    "net",
+    "rt-multi-thread",
+    "sync",
+    "time",
+] }
+tokio-stream = "0.1"
+tokio-tungstenite = { version = "0.30", default-features = false, features = [
+    "connect",
+    "handshake",
+    "rustls-tls-native-roots",
+] }
+tonic = { version = "0.14.6", features = ["tls-native-roots"] }
+tonic-reflection = { version = "0.14.6", default-features = false }
+url = "2"
+uuid = { version = "1", features = ["serde", "v4"] }

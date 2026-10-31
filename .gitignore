@@ -1,0 +1,36 @@
+# JavaScript
+node_modules/
+.pnpm-store/
+dist/
+.vite/
+playwright-report/
+test-results/
+.tools/
+.release-artifacts/
+*.tsbuildinfo
+apps/desktop/src-tauri/gen/
+apps/site/.build-*/
+
+# Rust
+target/
+
+# Local application state and secrets
+.api-client/state/
+.api-client/history/
+.api-client/vault/
+*.local.yaml
+*.local.yml
+*.secrets.yaml
+*.secrets.yml
+*.apic-backup.json
+*.apic-diagnostics.json
+
+# IDE and operating system
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+!CHANGELOG.md

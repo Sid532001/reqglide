@@ -1,0 +1,6 @@
+packages:
+  - "apps/desktop"
+
+# Native build scripts are denied unless they are explicitly reviewed here.
+allowBuilds:
+  esbuild: true

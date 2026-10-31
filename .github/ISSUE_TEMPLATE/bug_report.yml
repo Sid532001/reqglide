@@ -1,0 +1,32 @@
+name: Bug report
+description: Help us reproduce and fix a problem in Reqglide.
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: "Remove tokens, cookies, private URLs, certificates, and personal identifiers. For security vulnerabilities, follow SECURITY.md."
+  - type: input
+    id: version
+    attributes:
+      label: Reqglide version and operating system
+      placeholder: "0.1.0 preview, Windows 11 x64"
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Include a minimal example using synthetic data.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Sanitized errors, screenshots, and whether a proxy or VPN is involved.

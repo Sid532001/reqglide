@@ -1,0 +1,82 @@
+name: Windows release candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: Package a preview or verify a signed candidate
+        type: choice
+        options: [internal-preview, community-preview, signed-candidate]
+        default: internal-preview
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm audit --prod --audit-level high
+      - run: cargo install cargo-audit --version 0.22.2 --locked
+      - run: cargo audit
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --locked --workspace --all-targets -- -D warnings
+      - run: cargo test --locked --workspace
+      - run: pnpm test
+      - run: pnpm build
+      - name: Prepare publisher certificate
+        if: inputs.channel == 'signed-candidate'
+        shell: pwsh
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+          WINDOWS_TIMESTAMP_URL: ${{ vars.WINDOWS_TIMESTAMP_URL }}
+        run: |
+          if (-not $env:WINDOWS_CERTIFICATE -or -not $env:WINDOWS_CERTIFICATE_PASSWORD -or -not $env:WINDOWS_TIMESTAMP_URL) {
+            throw 'Configure publisher signing credentials and timestamp URL before requesting a signed candidate.'
+          }
+          $certificatePath = Join-Path $env:RUNNER_TEMP 'api-client-signing.pfx'
+          try {
+            [IO.File]::WriteAllBytes($certificatePath, [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE))
+            $password = ConvertTo-SecureString -String $env:WINDOWS_CERTIFICATE_PASSWORD -AsPlainText -Force
+            $imported = Import-PfxCertificate -FilePath $certificatePath -CertStoreLocation Cert:\CurrentUser\My -Password $password
+            $signers = @($imported | Where-Object HasPrivateKey)
+            if ($signers.Count -ne 1) { throw 'The PFX must contain exactly one publisher signing identity.' }
+            "WINDOWS_CERTIFICATE_THUMBPRINT=$($signers[0].Thumbprint)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          } finally {
+            if (Test-Path -LiteralPath $certificatePath) { Remove-Item -LiteralPath $certificatePath }
+          }
+      - name: Build internal preview
+        if: inputs.channel == 'internal-preview'
+        shell: pwsh
+        run: ./scripts/build-windows.ps1 -Preview
+      - name: Build and verify signed candidate
+        if: inputs.channel == 'signed-candidate'
+        shell: pwsh
+        env:
+          WINDOWS_TIMESTAMP_URL: ${{ vars.WINDOWS_TIMESTAMP_URL }}
+        run: ./scripts/build-windows.ps1 -CertificateThumbprint $env:WINDOWS_CERTIFICATE_THUMBPRINT -TimestampUrl $env:WINDOWS_TIMESTAMP_URL
+      - name: Build unsigned community preview
+        if: inputs.channel == 'community-preview'
+        shell: pwsh
+        run: ./scripts/build-windows.ps1 -CommunityPreview
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-${{ inputs.channel }}-${{ github.sha }}
+          path: .release-artifacts/windows/
+          if-no-files-found: error
+          retention-days: 14

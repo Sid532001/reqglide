@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Reqglide application icon</title>
+  <defs>
+    <linearGradient id="background" x1="76" y1="48" x2="436" y2="464" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9B84FF"/>
+      <stop offset="1" stop-color="#5434CF"/>
+    </linearGradient>
+    <linearGradient id="signal" x1="137" y1="170" x2="375" y2="342" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#DCD4FF"/>
+    </linearGradient>
+  </defs>
+  <rect x="24" y="24" width="464" height="464" rx="112" fill="url(#background)"/>
+  <path d="M136 186h174l-38-38 30-30 90 89-90 90-30-30 38-38H136v-43Z" fill="url(#signal)"/>
+  <path d="M376 326H202l38 38-30 30-90-89 90-90 30 30-38 38h174v43Z" fill="#B9AAFF" opacity=".9"/>
+  <circle cx="136" cy="207" r="22" fill="#FFFFFF"/>
+  <circle cx="376" cy="305" r="22" fill="#E9E4FF"/>
+</svg>
